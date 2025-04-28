@@ -18,6 +18,7 @@ class InputEmbeddings(nn.Module):
 class PositionalEncoding(nn.Module):
     
     def __init__(self, d_model:int , seq_length:int ):
+        super().__init__()
         self.d_model = d_model
         self.seq_length = seq_length
                 
@@ -33,7 +34,7 @@ class PositionalEncoding(nn.Module):
         
         self.register_buffer('pe', pe)
     
-    def forward(x):
+    def forward(self, x):
         x = x + (self.pe[:, :x.shape[1], :]).requires_grad(True)
         return x # [batch, seq_len, d_model]
     
@@ -94,7 +95,7 @@ class MultiHeadAttentionBlock(nn.Module):
         if mask is not None:
             attention_scores = scores.masked_fill(mask == 0, -1e9)
             
-        attention_scores = attention_scores.softmax(scores, dim=-1)
+        attention_scores = attention_scores.softmax(dim=-1)
         if dropout is not None:
             attention_scores = dropout(attention_scores)
             
@@ -165,7 +166,7 @@ class DecoderBlock(nn.Module):
         
     def forward(self, x, encoder_output, src_mask, tgt_mask):
         x = self.residual_connections[0](x, lambda x: self.self_attention(x, x, x, tgt_mask))
-        x = self.residual_connections[1](x, lambda x: self.cross_attention(x, encoder_output, encoder_output, src_mask, tgt_mask))
+        x = self.residual_connections[1](x, lambda x: self.cross_attention(x, encoder_output, encoder_output, src_mask))
         x = self.residual_connections[2](x, self.feed_forward)
         return x
     

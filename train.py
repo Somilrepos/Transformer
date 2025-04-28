@@ -30,6 +30,7 @@ def get_or_build_tokenizer(config, ds, lang):
         tokenizer.save(str(tokenizer_path))
     else:
         tokenizer = Tokenizer.from_file(tokenizer_path)
+    return tokenizer
         
 
 def get_ds(config):
@@ -46,7 +47,7 @@ def get_ds(config):
     val_ds = BilingualDataset(val_ds_raw, src_tokenizer, tgt_tokenizer, config['lang_src'], config['lang_tgt'], config['seq_len'])
     
     max_len_src = 0
-    max_len_src = 0
+    max_len_tgt = 0
     
     for item in ds_raw:
         src_ids = src_tokenizer.encode(item['translation'][config['lang_src']]).ids
@@ -58,7 +59,7 @@ def get_ds(config):
         print(f"Max length of source sentence: {max_len_src}")
         print(f"Max length of target sentence: {max_len_tgt}")
         
-        train_dataloader = DataLoader(train_ds, batch_size=['batch_size'], shuffle=True)
+        train_dataloader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True)
         val_dataloader = DataLoader(val_ds,  shuffle=True)
         
         return train_dataloader, val_dataloader, src_tokenizer, tgt_tokenizer
@@ -71,9 +72,9 @@ def train_model(config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device {device}")
     
-    Path(config['model_folder'].mkdir(parents=True, exists=True))
+    Path(config['model_folder']).mkdir(parents=True, exists=True)
     
-    train_dataloader, val_dataloader, src_tokenizer, tgt_tokenizer = get_ds()
+    train_dataloader, val_dataloader, src_tokenizer, tgt_tokenizer = get_ds(config)
     model = get_model(config, src_tokenizer.get_vocab_size(), tgt_tokenizer.get_vocab_size())
     
     writer = SummaryWriter(config['experiment_name'])
