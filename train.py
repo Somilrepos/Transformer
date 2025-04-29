@@ -75,7 +75,7 @@ def train_model(config):
     Path(config['model_folder']).mkdir(parents=True, exist_ok=True)
     
     train_dataloader, val_dataloader, src_tokenizer, tgt_tokenizer = get_ds(config)
-    model = get_model(config, src_tokenizer.get_vocab_size(), tgt_tokenizer.get_vocab_size())
+    model = get_model(config, src_tokenizer.get_vocab_size(), tgt_tokenizer.get_vocab_size()).to(device)
     
     writer = SummaryWriter(config['experiment_name'])
     
