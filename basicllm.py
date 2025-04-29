@@ -41,7 +41,7 @@ class PositionalEncoding(nn.Module):
     
 class LayerNormalization(nn.Module):
     
-    def __init__(self, eps:float = 10*-6 ):
+    def __init__(self, eps:float = 10**-6 ):
         super().__init__()
         self.eps = eps
         self.alpha = nn.Parameter(torch.ones(1))
@@ -93,9 +93,9 @@ class MultiHeadAttentionBlock(nn.Module):
         
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
         if mask is not None:
-            attention_scores = scores.masked_fill(mask == 0, -1e9)
+            scores = scores.masked_fill(mask == 0, float('-1e9'))
             
-        attention_scores = attention_scores.softmax(dim=-1)
+        attention_scores = scores.softmax(dim=-1)
         if dropout is not None:
             attention_scores = dropout(attention_scores)
             

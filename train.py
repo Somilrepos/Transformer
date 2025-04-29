@@ -26,7 +26,7 @@ def get_or_build_tokenizer(config, ds, lang):
         tokenizer = Tokenizer(WordLevel(unk_token='[UNK]'))
         tokenizer.pre_tokenizer = Whitespace()
         trainer = WordLevelTrainer(special_tokens=["[UNK]","[PAD]","[SOS]","[EOS]"], min_freq=2)
-        tokenizer.train_from_iterator(get_all_sentences(ds, lang))
+        tokenizer.train_from_iterator(get_all_sentences(ds, lang), trainer=trainer)
         tokenizer.save(str(tokenizer_path))
     else:
         tokenizer = Tokenizer.from_file(tokenizer_path)
@@ -34,7 +34,7 @@ def get_or_build_tokenizer(config, ds, lang):
         
 
 def get_ds(config):
-    ds_raw = load_dataset("opus_books", f"{config["lang_src"]}-{config["lang_tgt"]}", split="train")
+    ds_raw = load_dataset("opus_books", f'{config["lang_src"]}-{config["lang_tgt"]}', split="train")
     
     src_tokenizer = get_or_build_tokenizer(config, ds_raw, config['lang_src'])
     tgt_tokenizer = get_or_build_tokenizer(config, ds_raw, config['lang_tgt'])
@@ -55,14 +55,14 @@ def get_ds(config):
         
         max_len_src = max(max_len_src, len(src_ids))
         max_len_tgt = max(max_len_tgt, len(tgt_ids))
+    
+    print(f"Max length of source sentence: {max_len_src}")
+    print(f"Max length of target sentence: {max_len_tgt}")
+    
+    train_dataloader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True)
+    val_dataloader = DataLoader(val_ds,  shuffle=True)
         
-        print(f"Max length of source sentence: {max_len_src}")
-        print(f"Max length of target sentence: {max_len_tgt}")
-        
-        train_dataloader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True)
-        val_dataloader = DataLoader(val_ds,  shuffle=True)
-        
-        return train_dataloader, val_dataloader, src_tokenizer, tgt_tokenizer
+    return train_dataloader, val_dataloader, src_tokenizer, tgt_tokenizer
 
 def get_model(config, vocab_src_len, vocab_tgt_len):
     model = build_transformers(vocab_src_len, vocab_tgt_len, config['seq_len'], config['seq_len'], config['d_model'])
@@ -91,7 +91,7 @@ def train_model(config):
         optimizer.load_state_dict(state["optimizer_state_dict"])
         global_step = state['global_step']
         
-    loss_fn = nn.CrossEntropyLoss(ignore_index=src_tokenizer.token_to_id("[PAD]"), label_smoothing=0.1).to(device)
+    loss_fn = nn.CrossEntropyLoss(ignore_index=tgt_tokenizer.token_to_id("[PAD]"), label_smoothing=0.1).to(device)
     
     for epoch in range(inital_epoch, config['num_epochs']):
         model.train()
