@@ -29,7 +29,7 @@ def get_or_build_tokenizer(config, ds, lang):
         tokenizer.train_from_iterator(get_all_sentences(ds, lang), trainer=trainer)
         tokenizer.save(str(tokenizer_path))
     else:
-        tokenizer = Tokenizer.from_file(tokenizer_path)
+        tokenizer = Tokenizer.from_file(str(tokenizer_path))
     return tokenizer
         
 
@@ -72,7 +72,7 @@ def train_model(config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device {device}")
     
-    Path(config['model_folder']).mkdir(parents=True, exists=True)
+    Path(config['model_folder']).mkdir(parents=True, exist_ok=True)
     
     train_dataloader, val_dataloader, src_tokenizer, tgt_tokenizer = get_ds(config)
     model = get_model(config, src_tokenizer.get_vocab_size(), tgt_tokenizer.get_vocab_size())
